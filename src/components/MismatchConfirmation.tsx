@@ -3,6 +3,7 @@ import type { MedicationComparison } from "../comparison/compare-medication-requ
 import { useVoiceWarning } from "../voice/useVoiceWarning";
 import { mismatchWarning } from "../voice/warning-text";
 import { FIELD_LABELS } from "./field-labels";
+import { AlertIcon, CheckIcon, SpeakerIcon } from "./icons";
 
 interface MismatchConfirmationProps {
   comparison: MedicationComparison;
@@ -33,28 +34,38 @@ export function MismatchConfirmation({ comparison, onReviewAgain }: MismatchConf
   };
 
   return (
-    <div className={`mismatch${confirmed ? " mismatch--confirmed" : ""}`}>
+    <div className={`mismatch ${confirmed ? "mismatch--confirmed" : "mismatch--open"}`}>
       {confirmed ? (
-        <p className="comparison__verdict comparison__verdict--confirmed" role="status">
-          <span aria-hidden="true">✓</span> Mismatch confirmed
+        <p className="mismatch__title" role="status">
+          <CheckIcon size={24} />
+          Mismatch confirmed
         </p>
       ) : (
-        <p className="comparison__verdict comparison__verdict--mismatch" role="alert">
-          <span aria-hidden="true">⚠</span> Possible mismatch
+        <p className="mismatch__title" role="alert">
+          <AlertIcon size={24} />
+          Possible mismatch
         </p>
       )}
 
-      <ul className="comparison__differences">
+      <ul className="differences">
         {comparison.mismatches.map((mismatch) => (
-          <li key={mismatch.field} className="comparison__difference">
-            <strong>{FIELD_LABELS[mismatch.field]}</strong>
-            <span>Customer: {mismatch.customer}</span>
-            <span>Pharmacist: {mismatch.pharmacist}</span>
+          <li key={mismatch.field} className="difference">
+            <span className="difference__field">{FIELD_LABELS[mismatch.field]}</span>
+            <dl className="difference__values">
+              <div>
+                <dt>Customer</dt>
+                <dd>{mismatch.customer}</dd>
+              </div>
+              <div>
+                <dt>Pharmacist</dt>
+                <dd>{mismatch.pharmacist}</dd>
+              </div>
+            </dl>
           </li>
         ))}
       </ul>
 
-      <p className="comparison__confirm">
+      <p className="mismatch__prompt">
         {confirmed
           ? "The difference was acknowledged. Neither value was changed."
           : "Please confirm before proceeding."}
@@ -62,16 +73,17 @@ export function MismatchConfirmation({ comparison, onReviewAgain }: MismatchConf
 
       <div className="mismatch__actions">
         {!confirmed && (
-          <button type="button" className="button button--start" onClick={confirm}>
+          <button type="button" className="button button--inverse" onClick={confirm}>
             Confirm
           </button>
         )}
-        <button type="button" className="button button--secondary" onClick={reviewAgain}>
+        <button type="button" className="button button--outline" onClick={reviewAgain}>
           Review again
         </button>
         {voice.supported && (
-          <button type="button" className="button button--secondary" onClick={voice.replay}>
-            <span aria-hidden="true">🔊</span> Replay
+          <button type="button" className="button button--ghost" onClick={voice.replay}>
+            <SpeakerIcon />
+            Replay
           </button>
         )}
       </div>

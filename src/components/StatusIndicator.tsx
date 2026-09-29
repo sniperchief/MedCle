@@ -4,8 +4,8 @@ const LABELS: Record<TranscriptionStatus, string> = {
   idle: "Ready",
   connecting: "Connecting…",
   listening: "Listening",
-  stopping: "Finishing…",
-  completed: "Done",
+  stopping: "Processing…",
+  completed: "Transcript ready",
   error: "Error",
 };
 

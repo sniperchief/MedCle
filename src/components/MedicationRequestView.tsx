@@ -1,6 +1,7 @@
 import { MEDICATION_FIELDS } from "../comparison/compare-medication-requests";
 import type { MedicationExtraction } from "../extraction/useMedicationExtraction";
 import { FIELD_LABELS } from "./field-labels";
+import { AlertIcon, RetryIcon } from "./icons";
 
 interface MedicationRequestViewProps {
   title: string;
@@ -14,16 +15,21 @@ export function MedicationRequestView({ title, extraction, onRetry }: Medication
 
   return (
     <section className="extraction" aria-label={`${title} request`} aria-live="polite">
-      <h3 className="extraction__title">Extracted information · {title} request</h3>
+      <h3 className="eyebrow">Extracted information · {title} request</h3>
 
       {extraction.status === "loading" && (
-        <p className="extraction__message">Extracting the request from the transcript…</p>
+        <p className="extraction__message">
+          <span className="loader" aria-hidden="true" />
+          Extracting the request from the transcript…
+        </p>
       )}
 
       {extraction.status === "error" && (
-        <div className="extraction__message extraction__message--error" role="alert">
+        <div className="notice extraction__message--error" role="alert">
+          <AlertIcon />
           <span>Couldn't extract the request. The transcript above is unchanged.</span>
-          <button type="button" className="button button--retry" onClick={onRetry}>
+          <button type="button" className="button button--outline button--small" onClick={onRetry}>
+            <RetryIcon />
             Retry
           </button>
         </div>

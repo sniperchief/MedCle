@@ -26,7 +26,12 @@ app.use("/api", (_req, res) => {
 });
 
 if (config.production) {
-  app.use(express.static(path.resolve(import.meta.dirname, "../dist")));
+  const distDir = path.resolve(import.meta.dirname, "../dist");
+  app.use(express.static(distDir));
+  // Client-side routes such as /app load the single-page app shell.
+  app.get("/{*path}", (_req, res) => {
+    res.sendFile(path.join(distDir, "index.html"));
+  });
 } else {
   // Vite is a dev dependency, so it is only loaded outside production.
   const { createServer: createViteServer } = await import("vite");

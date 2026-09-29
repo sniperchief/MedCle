@@ -23,6 +23,11 @@ const SPEECH_MODEL = "universal-3-6-pro";
 const CONNECT_TIMEOUT_MS = 10_000;
 // How long to wait for AssemblyAI to deliver the final turn after we stop.
 const TERMINATION_TIMEOUT_MS = 5_000;
+// End-of-turn silence, generous so hesitant speakers ("amoxic… amoxicillin")
+// aren't cut off: a confident end of turn needs at least MIN of silence, and
+// any turn ends after MAX. Ending the first turn stops the recording.
+export const MIN_TURN_SILENCE_MS = 1_000;
+export const MAX_TURN_SILENCE_MS = 2_000;
 
 /** Interrupts a pending connection step when the user stops the session. */
 class SessionStopped extends Error {}
@@ -116,11 +121,18 @@ export class TranscriptionSession {
       speechModel: SPEECH_MODEL,
       connectTimeout: CONNECT_TIMEOUT_MS,
       maxConnectionRetries: 0,
+      minTurnSilence: MIN_TURN_SILENCE_MS,
+      maxTurnSilence: MAX_TURN_SILENCE_MS,
     });
     transcriber.on("open", (begin) => {
       console.debug(`[MEDCLE] AssemblyAI session ${begin.id} started`, begin);
     });
-    transcriber.on("turn", (turn) => this.callbacks.onTurn(turn));
+    transcriber.on("turn", (turn) => {
+      this.callbacks.onTurn(turn);
+      // The speaker has finished what they were saying: stop listening, just
+      // as if Stop had been pressed. Silence alone (an empty turn) doesn't count.
+      if (turn.end_of_turn && turn.transcript.trim()) this.stop();
+    });
     transcriber.on("error", (error) => {
       this.fail(fromStreamingError(error, "session-ended"));
     });

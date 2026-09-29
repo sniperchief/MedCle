@@ -44,8 +44,8 @@ describe("mismatch confirmation", () => {
   test("2. mismatch → confirmation UI appears with both values", () => {
     renderComparison(customer500, pharmacist50);
     expect(text()).toContain("Possible mismatch");
-    expect(text()).toContain("Customer: 500 mg");
-    expect(text()).toContain("Pharmacist: 50 mg");
+    expect(text()).toMatch(/Customer\s*500 mg/);
+    expect(text()).toMatch(/Pharmacist\s*50 mg/);
     expect(text()).toContain("Please confirm before proceeding.");
     expect(confirmButton()).toBeTruthy();
     expect(reviewButton()).toBeTruthy();
@@ -57,8 +57,8 @@ describe("mismatch confirmation", () => {
 
     expect(text()).toContain("Mismatch confirmed");
     expect(text()).not.toContain("Possible mismatch");
-    expect(text()).toContain("Customer: 500 mg");
-    expect(text()).toContain("Pharmacist: 50 mg");
+    expect(text()).toMatch(/Customer\s*500 mg/);
+    expect(text()).toMatch(/Pharmacist\s*50 mg/);
     expect(confirmButton()).toBeNull();
     expect(customer500).toEqual(extracted());
     expect(pharmacist50).toEqual(extracted({ strength: "50 mg" }));
@@ -71,8 +71,8 @@ describe("mismatch confirmation", () => {
 
     expect(text()).toContain("Possible mismatch");
     expect(text()).not.toContain("Mismatch confirmed");
-    expect(text()).toContain("Customer: 500 mg");
-    expect(text()).toContain("Pharmacist: 50 mg");
+    expect(text()).toMatch(/Customer\s*500 mg/);
+    expect(text()).toMatch(/Pharmacist\s*50 mg/);
     expect(confirmButton()).toBeTruthy();
     expect(onReviewAgain).toHaveBeenCalledOnce();
   });
@@ -122,12 +122,12 @@ describe("mismatch confirmation", () => {
       extracted({ quantity: "20 tablets", form: "tablet" }),
       extracted({ medication: "amlodipine", strength: "50 mg", quantity: "2 tablets", form: "syrup" }),
     );
-    const differences = screen.getAllByRole("listitem").map((item) => item.textContent);
+    const differences = [...document.querySelectorAll(".difference")].map((item) => item.textContent);
     expect(differences).toEqual([
-      "MedicationCustomer: amoxicillinPharmacist: amlodipine",
-      "StrengthCustomer: 500 mgPharmacist: 50 mg",
-      "QuantityCustomer: 20 tabletsPharmacist: 2 tablets",
-      "FormCustomer: tabletPharmacist: syrup",
+      "MedicationCustomeramoxicillinPharmacistamlodipine",
+      "StrengthCustomer500 mgPharmacist50 mg",
+      "QuantityCustomer20 tabletsPharmacist2 tablets",
+      "FormCustomertabletPharmacistsyrup",
     ]);
     expect(confirmButton()).toBeTruthy();
   });

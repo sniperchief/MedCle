@@ -1,3 +1,4 @@
+import type { MedicationRequest } from "../../shared/medication-request";
 import type {
   FieldComparison,
   MedicationComparison,
@@ -37,6 +38,26 @@ export function mismatchWarning(comparison: MedicationComparison): string | null
     (mismatch) => `For ${FIELD_NOUNS[mismatch.field]}, ${lowerFirst(statedValues(mismatch))}`,
   );
   return `There may be differences in ${joinWithAnd(fields)}. ${details.join(" ")} Please confirm.`;
+}
+
+/**
+ * What MEDCLE says back to the customer after extracting their request. It
+ * repeats only what was heard, names kept exactly as transcribed, and asks
+ * whether that is what they meant. It never says the request is medically right.
+ */
+export function readbackText(request: MedicationRequest): string {
+  if (!request.medication) {
+    return "I couldn't make out a medication name. Please say it again.";
+  }
+  const { medication, strength, quantity, form } = request;
+  const formInQuantity = form && quantity?.toLowerCase().includes(form.toLowerCase());
+  const heard = [
+    medication,
+    strength && spoken(strength),
+    form && !formInQuantity ? form : null,
+    quantity && spoken(quantity),
+  ].filter(Boolean);
+  return `I heard: ${heard.join(", ")}. Is that correct?`;
 }
 
 function statedValues({ customer, pharmacist }: FieldComparison): string {
