@@ -1,4 +1,16 @@
 {
+  // Solution file for `tsc -b`: it compiles nothing itself (see the references).
+  // Its compilerOptions are what Vercel uses to compile the api/ functions, one
+  // file at a time: emit ES modules, and rewrite the relative `.ts` imports that
+  // Node needs locally to the `.js` files Vercel deploys.
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
   "files": [],
   "references": [
     {
