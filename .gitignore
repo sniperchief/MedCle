@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+*.log
+
+# Secrets: never commit real environment files
+.env
+.env.*
+!.env.example
