@@ -1,109 +1,202 @@
-# MEDCLE
+<p align="center">
+  <img src="public/logo.png" alt="MEDCLE" height="72" />
+</p>
 
-Helping pharmacists and customers hear the same thing.
+<p align="center">
+  <strong>Helping pharmacists and customers hear the same thing.</strong><br />
+  A voice communication safety layer for the pharmacy counter.
+</p>
 
-Medication names are hard to say. MEDCLE listens to a customer's spoken request at the pharmacy
-counter, transcribes it, extracts the medication details that were explicitly stated, and reads the
-request back ("I heard: amoxicillin, 500 milligrams. Is that correct?") so the customer can confirm
-it. As an optional second check, the pharmacist can repeat the request back and MEDCLE flags any
-difference between the two.
+<p align="center">
+  <a href="https://medcle.vercel.app"><strong>Live demo</strong></a> ·
+  <a href="https://medcle.vercel.app/app">Open the counter tool</a>
+</p>
 
-MEDCLE is a communication aid. It does not prescribe, diagnose, recommend medication, decide which
-dose is correct, or correct what was said. The pharmacist makes every medical decision.
+---
 
-## Pages
+## The problem
 
-- `/` — landing page explaining the problem and how MEDCLE works.
-- `/app` — the counter tool.
+Customers aren't pharmacists. Generic medication names are long, unfamiliar and easy to
+mispronounce, so requests at the counter often come out half-said: *"I need the amoxic… amoxi… the
+amoxy one? Five hundred, I think."* When the pharmacist hears one thing and the customer meant
+another, a 500 mg request can become 50 mg.
 
-## How the tool works
+## What MEDCLE does
 
-1. **Customer speaks.** Audio streams from the browser to
-   [AssemblyAI Streaming v3](https://www.assemblyai.com/docs/speech-to-text/universal-streaming)
-   using a short-lived token minted by the server. Recording stops by itself at the end of the
-   speaker's turn (or with Stop).
-2. **Extraction.** The final transcript is sent to Claude (Haiku 4.5) with a strict JSON schema to
-   extract medication, strength, quantity and form, exactly as stated. The transcript stays the
-   record of what was said.
-3. **Readback.** MEDCLE speaks and shows what it heard, using the browser's speech synthesis, with
-   *Yes, that's right* / *Say it again* / *Replay*.
-4. **Optional pharmacist read-back.** The pharmacist repeats the request; a deterministic,
-   field-by-field comparison flags possible mismatches (spoken aloud), which must be confirmed.
-   Fields stated by only one side are reported as unconfirmed, not as mismatches.
+MEDCLE listens to the customer, turns what they said into a clear request, and reads it back so
+both people can confirm it before anything is handed over.
 
-API keys never reach the browser. Streaming tokens are single-use, must be redeemed within 60
-seconds, and cap each session at 10 minutes.
+1. **The customer speaks naturally.** Speech is transcribed in real time. Recording stops by itself
+   when the customer finishes.
+2. **MEDCLE extracts the request.** The medication, strength, quantity and form that were
+   explicitly stated are pulled out of the transcript. The transcript itself stays the record of
+   what was said.
+3. **MEDCLE reads it back.** *"I heard: amoxicillin, 500 milligrams. Is that correct?"* The
+   customer confirms, asks to say it again, or replays it.
+4. **Optional pharmacist read-back.** For a second check, the pharmacist repeats the request.
+   MEDCLE compares the two field by field and flags any difference for both to confirm:
+   *Strength: Customer 500 mg · Pharmacist 50 mg.*
 
-## Requirements
+## Safety principles
 
-- Node.js 24
-- An AssemblyAI API key and an Anthropic API key
+MEDCLE is a communication aid. The pharmacist makes every medical decision.
 
-## Local development
+| MEDCLE does | MEDCLE does not |
+| --- | --- |
+| Capture and transcribe what the customer says | Prescribe or diagnose |
+| Extract only the details that were explicitly stated | Recommend medication |
+| Read the request back for confirmation | Decide which dose is correct |
+| Optionally compare it with what the pharmacist heard | Correct or guess medication names |
+| Flag differences for both people to confirm | Replace the pharmacist |
+
+These principles are enforced in the implementation, not just stated:
+
+- **Nothing is corrected after the fact.** The extraction prompt keeps names and amounts exactly as
+  transcribed, and a live test checks that an unfamiliar name such as "ancetamophin" is preserved.
+- **Recognition is helped, not rewritten.** A vocabulary of common, hard-to-say medication names is
+  passed to the speech model as key terms, so a hesitant "amoxicillin" is more likely to be *heard*
+  correctly. The result is still read back for confirmation.
+- **The comparison is deterministic.** It uses no AI and no medical knowledge. It ignores only case
+  and spacing, never picks a side, and reports a detail stated by one person only as unconfirmed,
+  not as a mismatch.
+- **No guessing.** If no medication name was heard, MEDCLE asks the customer to say it again.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    Mic[Microphone + AudioWorklet]
+    UI[React app]
+    TTS[Speech synthesis]
+  end
+  subgraph Vercel
+    CDN[Static site on the CDN]
+    Token["/api/streaming-token"]
+    Extract["/api/extract-medication"]
+  end
+  AAI[(AssemblyAI<br/>Streaming STT)]
+  Claude[(Anthropic<br/>Claude Haiku 4.5)]
+
+  CDN --> UI
+  UI -- 1. request token --> Token -- mint single-use token --> AAI
+  Mic -- 2. audio over WebSocket --> AAI
+  AAI -- live transcript --> UI
+  UI -- 3. final transcript --> Extract -- structured extraction --> Claude
+  UI -- 4. readback --> TTS
+```
+
+- **Audio never passes through MEDCLE's servers.** The browser streams directly to AssemblyAI using
+  a single-use token that must be redeemed within 60 seconds and caps the session at 10 minutes.
+- **API keys stay server-side.** They live in environment variables that only the two serverless
+  functions can read.
+- **Stateless.** There is no database and no file storage. MEDCLE does not store recordings or
+  transcripts.
+- **Portable.** The same route logic runs as Vercel Functions in production and inside an Express
+  server locally, so the app can also be self-hosted on any Node host.
+
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| Frontend | React 19, TypeScript, Vite 8, plain CSS, Web Audio (AudioWorklet), Web Speech API |
+| Speech-to-text | AssemblyAI Streaming v3 (`universal-3-6-pro`) with medication key terms and end-of-turn detection |
+| Extraction | Anthropic Claude Haiku 4.5 with structured JSON output |
+| Backend | Vercel Functions (Node.js 24); Express 5 for local development and self-hosting |
+| Hosting | Vercel (CDN, serverless functions, environment variables, deploys from GitHub) |
+| Quality | TypeScript (strict), ESLint, Node test runner, Vitest, Testing Library |
+
+## Getting started
+
+**Requirements:** Node.js 24, an [AssemblyAI API key](https://www.assemblyai.com/app/api-keys) and an
+[Anthropic API key](https://platform.claude.com/settings/keys).
 
 ```sh
+git clone https://github.com/sniperchief/MedCle.git
+cd MedCle
 npm install
-cp .env.example .env   # then set ASSEMBLYAI_API_KEY and ANTHROPIC_API_KEY
+cp .env.example .env   # then add your API keys
 npm run dev            # http://localhost:3000
 ```
 
-| Variable             | Required | Description                                                 |
-| -------------------- | -------- | ----------------------------------------------------------- |
-| `ASSEMBLYAI_API_KEY` | yes      | AssemblyAI API key for transcription. Server-side only.     |
-| `ANTHROPIC_API_KEY`  | yes      | Anthropic API key for medication extraction. Server-side only. |
-| `PORT`               | no       | Port for the local server. Defaults to `3000`.              |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `ASSEMBLYAI_API_KEY` | Yes | AssemblyAI key for transcription. Server-side only. |
+| `ANTHROPIC_API_KEY` | Yes | Anthropic key for medication extraction. Server-side only. |
+| `PORT` | No | Port for the local server. Defaults to `3000`. |
 
-Microphone access requires `localhost` or HTTPS.
+Browsers only allow microphone access on `localhost` or over HTTPS.
 
 ## Scripts
 
-| Command             | What it does                                                         |
-| ------------------- | -------------------------------------------------------------------- |
-| `npm run dev`       | Express server with Vite dev middleware and hot reload               |
-| `npm run build`     | Type-checks and builds the client into `dist/`                       |
-| `npm start`         | Serves the production build and the API with Express                 |
-| `npm test`          | Unit and component tests (no network)                                |
-| `npm run test:live` | Extraction tests against the real Claude API (billed; needs the key) |
-| `npm run typecheck` | Type-checks client, server, functions and tests                      |
-| `npm run lint`      | Lints the project                                                    |
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Local server with hot reload |
+| `npm run build` | Type-check and build the client into `dist/` |
+| `npm start` | Serve the production build and API with Express |
+| `npm test` | Unit and component tests (no network access) |
+| `npm run test:live` | Extraction tests against the real Claude API (billed; requires a key) |
+| `npm run typecheck` | Type-check the client, server, functions and tests |
+| `npm run lint` | Lint the project |
 
-## Deploying to Vercel
+## Testing
 
-On Vercel the Vite build is served as static files and the two API routes run as Vercel Functions
-from `api/`. They share their logic with the local Express server (`server/`), so behaviour is the
-same in both places. `vercel.json` sets the build and serves the app shell at `/app`.
+`npm test` runs the whole suite offline, with no API keys needed:
 
-1. Import the GitHub repository in Vercel (**Add New → Project**). The settings come from
-   `vercel.json`; Node 24 comes from `package.json`.
-2. Add `ASSEMBLYAI_API_KEY` and `ANTHROPIC_API_KEY` under **Settings → Environment Variables**
-   for Production and Preview. Changes apply to new deployments, so redeploy after adding them.
-3. Deploy, then test the preview URL (HTTPS, so the microphone works on phones too).
-4. Protect the paid APIs before sharing the URL:
-   - **Firewall → rate limit** rule on `/api/` (e.g. 20 requests per minute per IP).
-   - Spending limits in the AssemblyAI and Anthropic dashboards.
+- **Server and logic:** extraction output validation, request validation, the Vercel functions,
+  the deterministic comparison, the spoken warning and readback text, and the medication key-term
+  limits.
+- **Components:** the readback, mismatch confirmation and voice warning (with a mocked
+  `speechSynthesis`), the recording session's auto-stop behaviour (with a mocked AssemblyAI SDK),
+  routing, the optional pharmacist read-back, and the navigation menu and footer.
 
-Vercel's Hobby plan is for non-commercial use; a commercial pilot needs a paid plan.
+`npm run test:live` runs a set of real transcripts through Claude to check that extraction keeps
+names as spoken, returns `null` for details that weren't stated, and ignores small talk.
 
-## Code layout
+## Deployment
+
+MEDCLE is deployed on [Vercel](https://vercel.com). The Vite build is served from the CDN, and the
+two API routes run as Vercel Functions from `api/`. `vercel.json` configures the build and serves
+the app at `/app`.
+
+1. Import the repository in Vercel (**Add New → Project**). Build settings come from `vercel.json`,
+   and Node.js 24 from `package.json`.
+2. Add `ASSEMBLYAI_API_KEY` and `ANTHROPIC_API_KEY` under **Settings → Environment Variables** for
+   Production and Preview, then redeploy.
+3. Before sharing the URL, protect the paid APIs:
+   - add a **Firewall rate-limit rule** for paths starting with `/api/`, for example 20 requests
+     per minute per IP;
+   - set spending limits in the AssemblyAI and Anthropic dashboards.
+
+Pushes to `main` deploy automatically.
+
+## Project structure
 
 ```
-api/                         Vercel Functions (thin wrappers around server/ logic)
-  streaming-token.ts         POST /api/streaming-token
-  extract-medication.ts      POST /api/extract-medication
-server/
-  index.ts                   Local/production Express server (API + Vite or static files)
-  streaming-token.ts         Token route logic
-  medication-extraction.ts   Extraction prompt, schema, Claude call, validation, route logic
-  api-result.ts              Route results and their Express / Web Response adapters
-  config.ts                  Environment variables
-shared/
-  medication-request.ts      The MedicationRequest type
+api/                          Vercel Functions (thin wrappers around server/ logic)
+server/                       Route logic, Claude extraction, Express server, configuration
+shared/                       Types shared by the client and the server
+public/                       Logo, favicons and web app manifest
 src/
-  landing/                   Landing page sections
-  transcription/             Microphone capture, AssemblyAI session lifecycle, React state
-  extraction/                Calls the extraction endpoint; extraction state with retry
-  comparison/                Deterministic customer vs pharmacist comparison
-  voice/                     Spoken readback and mismatch warning (SpeechSynthesis)
-  components/                Speaker panels, readback, comparison, mismatch confirmation
-  router.tsx                 Two-route client router ("/" and "/app")
+  landing/                    Landing page sections
+  transcription/              Microphone capture, AssemblyAI session, medication key terms
+  extraction/                 Extraction requests and state, with retry
+  comparison/                 Deterministic customer vs pharmacist comparison
+  voice/                      Spoken readback and mismatch warning
+  components/                 Speaker panels, readback, comparison, confirmation, layout
+  router.tsx                  Client-side routing for "/" and "/app"
 ```
+
+## Privacy
+
+Speech is sent to AssemblyAI for transcription, and the finished transcript to Anthropic for
+extraction, under those providers' data policies. MEDCLE itself does not store recordings or
+transcripts. Anyone planning real pharmacy use should review the health-data rules that apply
+where they operate, and tell customers that the conversation is transcribed.
+
+## Limitations
+
+- English only, tuned for a single speaker per recording.
+- The medication key terms cover common names only; other names get no recognition help.
+- One medication per request: if several are mentioned, the first is extracted.
+- Voice output depends on the voices installed on each device.
