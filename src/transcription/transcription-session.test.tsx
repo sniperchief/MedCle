@@ -1,6 +1,7 @@
 // Runs under Vitest (it needs module mocks), hence the .tsx extension.
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { TurnEvent } from "assemblyai/streaming";
+import { MEDICATION_KEYTERMS } from "./medication-keyterms";
 import {
   MAX_TURN_SILENCE_MS,
   MIN_TURN_SILENCE_MS,
@@ -72,6 +73,14 @@ describe("auto-stop at the end of the speaker's turn", () => {
       minTurnSilence: MIN_TURN_SILENCE_MS,
       maxTurnSilence: MAX_TURN_SILENCE_MS,
     });
+    session.stop();
+    await finished;
+  });
+
+  test("sends the medication key terms to help recognise hard-to-say names", async () => {
+    const { session, finished, transcriber } = await startSession();
+    expect(transcriber.params.keytermsPrompt).toEqual([...MEDICATION_KEYTERMS]);
+    expect(transcriber.params.keytermsPrompt).toContain("amoxicillin");
     session.stop();
     await finished;
   });

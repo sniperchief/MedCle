@@ -1,5 +1,6 @@
 import { StreamingTranscriber, type TurnEvent } from "assemblyai/streaming";
 import { TranscriptionError, fromStreamingError } from "./errors";
+import { MEDICATION_KEYTERMS } from "./medication-keyterms";
 import { openMicrophone, type Microphone } from "./microphone";
 import { fetchStreamingToken } from "./streaming-token";
 
@@ -123,6 +124,8 @@ export class TranscriptionSession {
       maxConnectionRetries: 0,
       minTurnSilence: MIN_TURN_SILENCE_MS,
       maxTurnSilence: MAX_TURN_SILENCE_MS,
+      // Helps recognise medication names that are hard to say (recognition only).
+      keytermsPrompt: [...MEDICATION_KEYTERMS],
     });
     transcriber.on("open", (begin) => {
       console.debug(`[MEDCLE] AssemblyAI session ${begin.id} started`, begin);
