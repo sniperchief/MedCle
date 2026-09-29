@@ -7,10 +7,13 @@ export interface ServerConfig {
 
 const DEFAULT_PORT = 3000;
 
-function requireEnv(name: string, description: string): string {
+/** Reads a required secret; throws with setup instructions when it is missing. */
+export function requireEnv(name: string, description: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
-    throw new Error(`${name} is not set. Copy .env.example to .env and add your ${description}.`);
+    throw new Error(
+      `${name} is not set. Add your ${description} to .env locally, or to the project's environment variables when deployed.`,
+    );
   }
   return value;
 }

@@ -2,98 +2,108 @@
 
 Helping pharmacists and customers hear the same thing.
 
-- **Phase 1** transcribes the customer and the pharmacist in real time, in two separate sessions, using
-  [AssemblyAI Streaming Speech-to-Text v3](https://www.assemblyai.com/docs/speech-to-text/universal-streaming).
-- **Phase 2** extracts the stated medication, strength, quantity and form from each completed transcript
-  using Claude. It extracts only: no corrections, no inference, no medical advice.
-- **Phase 3** compares the two extracted requests field by field and flags possible mismatches for
-  the pharmacist to confirm. The comparison is deterministic (no LLM, no medical knowledge): only case
-  and spacing are ignored, and a field stated by only one side is reported as unconfirmed, not as a
-  mismatch.
+Medication names are hard to say. MEDCLE listens to a customer's spoken request at the pharmacy
+counter, transcribes it, extracts the medication details that were explicitly stated, and reads the
+request back ("I heard: amoxicillin, 500 milligrams. Is that correct?") so the customer can confirm
+it. As an optional second check, the pharmacist can repeat the request back and MEDCLE flags any
+difference between the two.
+
+MEDCLE is a communication aid. It does not prescribe, diagnose, recommend medication, decide which
+dose is correct, or correct what was said. The pharmacist makes every medical decision.
+
+## Pages
+
+- `/` — landing page explaining the problem and how MEDCLE works.
+- `/app` — the counter tool.
+
+## How the tool works
+
+1. **Customer speaks.** Audio streams from the browser to
+   [AssemblyAI Streaming v3](https://www.assemblyai.com/docs/speech-to-text/universal-streaming)
+   using a short-lived token minted by the server. Recording stops by itself at the end of the
+   speaker's turn (or with Stop).
+2. **Extraction.** The final transcript is sent to Claude (Haiku 4.5) with a strict JSON schema to
+   extract medication, strength, quantity and form, exactly as stated. The transcript stays the
+   record of what was said.
+3. **Readback.** MEDCLE speaks and shows what it heard, using the browser's speech synthesis, with
+   *Yes, that's right* / *Say it again* / *Replay*.
+4. **Optional pharmacist read-back.** The pharmacist repeats the request; a deterministic,
+   field-by-field comparison flags possible mismatches (spoken aloud), which must be confirmed.
+   Fields stated by only one side are reported as unconfirmed, not as mismatches.
+
+API keys never reach the browser. Streaming tokens are single-use, must be redeemed within 60
+seconds, and cap each session at 10 minutes.
 
 ## Requirements
 
-- Node.js 22.18 or newer (the server runs TypeScript natively)
+- Node.js 24
 - An AssemblyAI API key and an Anthropic API key
 
-## Setup
+## Local development
 
 ```sh
 npm install
-cp .env.example .env   # then set ASSEMBLYAI_API_KEY and ANTHROPIC_API_KEY in .env
+cp .env.example .env   # then set ASSEMBLYAI_API_KEY and ANTHROPIC_API_KEY
+npm run dev            # http://localhost:3000
 ```
 
-| Variable             | Required | Description                                                        |
-| -------------------- | -------- | ------------------------------------------------------------------ |
-| `ASSEMBLYAI_API_KEY` | yes      | AssemblyAI API key for transcription. Used only on the server.     |
-| `ANTHROPIC_API_KEY`  | yes      | Anthropic API key for medication extraction. Used only on the server. |
-| `PORT`               | no       | Port for the server. Defaults to `3000`.                           |
-
-## Scripts
-
-| Command             | What it does                                                          |
-| ------------------- | --------------------------------------------------------------------- |
-| `npm run dev`       | Server and Vite dev middleware with hot reload at `localhost:3000`     |
-| `npm run build`     | Type-checks and builds the client into `dist/`                        |
-| `npm start`         | Serves the production build and the API endpoints                     |
-| `npm run typecheck` | Type-checks the client and server                                     |
-| `npm run lint`      | Lints the project                                                     |
-| `npm test`          | Unit tests: extraction validation, endpoint, comparison (no network)  |
-| `npm run test:live` | Extraction tests against the real Claude API (billed; needs the key)  |
+| Variable             | Required | Description                                                 |
+| -------------------- | -------- | ----------------------------------------------------------- |
+| `ASSEMBLYAI_API_KEY` | yes      | AssemblyAI API key for transcription. Server-side only.     |
+| `ANTHROPIC_API_KEY`  | yes      | Anthropic API key for medication extraction. Server-side only. |
+| `PORT`               | no       | Port for the local server. Defaults to `3000`.              |
 
 Microphone access requires `localhost` or HTTPS.
 
-## How it works
+## Scripts
+
+| Command             | What it does                                                         |
+| ------------------- | -------------------------------------------------------------------- |
+| `npm run dev`       | Express server with Vite dev middleware and hot reload               |
+| `npm run build`     | Type-checks and builds the client into `dist/`                       |
+| `npm start`         | Serves the production build and the API with Express                 |
+| `npm test`          | Unit and component tests (no network)                                |
+| `npm run test:live` | Extraction tests against the real Claude API (billed; needs the key) |
+| `npm run typecheck` | Type-checks client, server, functions and tests                      |
+| `npm run lint`      | Lints the project                                                    |
+
+## Deploying to Vercel
+
+On Vercel the Vite build is served as static files and the two API routes run as Vercel Functions
+from `api/`. They share their logic with the local Express server (`server/`), so behaviour is the
+same in both places. `vercel.json` sets the build and serves the app shell at `/app`.
+
+1. Import the GitHub repository in Vercel (**Add New → Project**). The settings come from
+   `vercel.json`; Node 24 comes from `package.json`.
+2. Add `ASSEMBLYAI_API_KEY` and `ANTHROPIC_API_KEY` under **Settings → Environment Variables**
+   for Production and Preview. Changes apply to new deployments, so redeploy after adding them.
+3. Deploy, then test the preview URL (HTTPS, so the microphone works on phones too).
+4. Protect the paid APIs before sharing the URL:
+   - **Firewall → rate limit** rule on `/api/` (e.g. 20 requests per minute per IP).
+   - Spending limits in the AssemblyAI and Anthropic dashboards.
+
+Vercel's Hobby plan is for non-commercial use; a commercial pilot needs a paid plan.
+
+## Code layout
 
 ```
-Browser                                   Server                     AssemblyAI / Anthropic
-───────                                   ──────                     ──────────────────────
-Start Recording
-  getUserMedia → AudioWorklet (PCM16, 100 ms chunks)
-  POST /api/streaming-token ───────────▶  GET /v3/token (API key) ─▶
-                            ◀─────────── single-use token ◀────────
-  StreamingTranscriber (assemblyai SDK) ── wss://streaming.assemblyai.com/v3/ws?token=… ──▶
-  ◀── Turn messages (partial and end-of-turn) ──
-Stop Recording
-  stop mic → Terminate → wait for Termination → close socket
-  final transcript shown
-  POST /api/extract-medication ────────▶  Claude (structured JSON) ─▶
-                            ◀─────────── { medication, strength, quantity, form }
-```
-
-- The permanent API keys never reach the browser. The server mints a single-use AssemblyAI token that
-  must be redeemed within 60 seconds and caps each session at 10 minutes.
-- Audio is captured at the device's native sample rate and sent as 16-bit PCM.
-- Each speaker panel owns an independent `TranscriptionSession` and extraction, so nothing mixes.
-- Extraction runs once per completed recording, never on partial transcripts. Its result is shown
-  beneath the transcript and never replaces it. A failed extraction shows a Retry button and leaves the
-  transcript untouched.
-- The comparison is derived from both current extractions, so it appears only when both have succeeded
-  and disappears as soon as either side records again.
-
-### Code layout
-
-```
-shared/
-  medication-request.ts  The MedicationRequest type (client and server)
+api/                         Vercel Functions (thin wrappers around server/ logic)
+  streaming-token.ts         POST /api/streaming-token
+  extract-medication.ts      POST /api/extract-medication
 server/
-  index.ts               Express app: API endpoints + Vite (dev) or static files (prod)
-  streaming-token.ts     POST /api/streaming-token
-  medication-extraction.ts  POST /api/extract-medication: prompt, schema, Claude call, validation
-  config.ts              Environment variables
+  index.ts                   Local/production Express server (API + Vite or static files)
+  streaming-token.ts         Token route logic
+  medication-extraction.ts   Extraction prompt, schema, Claude call, validation, route logic
+  api-result.ts              Route results and their Express / Web Response adapters
+  config.ts                  Environment variables
+shared/
+  medication-request.ts      The MedicationRequest type
 src/
-  transcription/
-    transcription-session.ts  One session's lifecycle: mic → token → connect → stream → terminate
-    useTranscription.ts       React state for one speaker
-    microphone.ts             Microphone capture and PCM16 AudioWorklet pipeline
-    pcm16-chunker.worklet.ts  AudioWorklet: Float32 → Int16 chunks
-    streaming-token.ts        Fetches a token from the server
-    errors.ts                 User-facing error messages and AssemblyAI error-code mapping
-  comparison/
-    compare-medication-requests.ts  Deterministic Customer vs Pharmacist comparison (+ tests)
-  extraction/
-    extract-medication.ts     Calls the extraction endpoint
-    useMedicationExtraction.ts  Extraction state for one completed transcript, with retry
-  components/                 SpeakerPanel, StatusIndicator, MedicationRequestView, ComparisonView,
-                              useSpeaker (one speaker's transcription + extraction)
+  landing/                   Landing page sections
+  transcription/             Microphone capture, AssemblyAI session lifecycle, React state
+  extraction/                Calls the extraction endpoint; extraction state with retry
+  comparison/                Deterministic customer vs pharmacist comparison
+  voice/                     Spoken readback and mismatch warning (SpeechSynthesis)
+  components/                Speaker panels, readback, comparison, mismatch confirmation
+  router.tsx                 Two-route client router ("/" and "/app")
 ```

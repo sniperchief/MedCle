@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import type Anthropic from "@anthropic-ai/sdk";
 import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
 import type { MedicationRequest } from "../shared/medication-request.ts";
+import { sendResult, type ApiResult } from "./api-result.ts";
 
 // Anthropic's cheapest current model; extraction is a small, well-specified task.
 const MODEL = "claude-haiku-4-5";
@@ -88,31 +89,37 @@ export function toMedicationRequest(output: unknown): MedicationRequest {
   return request;
 }
 
-/** POST /api/extract-medication: `{ transcript }` → MedicationRequest. */
-export function createMedicationExtractionHandler(
-  extract: (transcript: string) => Promise<MedicationRequest>,
-): RequestHandler {
-  return async (req, res) => {
-    const transcript: unknown = req.body?.transcript;
-    if (
-      typeof transcript !== "string" ||
-      transcript.trim().length === 0 ||
-      transcript.length > MAX_TRANSCRIPT_LENGTH
-    ) {
-      res.status(400).json({
-        error: `transcript must be a non-empty string of at most ${MAX_TRANSCRIPT_LENGTH} characters.`,
-      });
-      return;
-    }
+type Extract = (transcript: string) => Promise<MedicationRequest>;
 
-    try {
-      res.json(await extract(transcript.trim()));
-    } catch (error) {
-      console.error(
-        "[medication-extraction] Extraction failed:",
-        error instanceof Error ? error.message : error,
-      );
-      res.status(502).json({ error: "Could not extract the medication request." });
-    }
+/** POST /api/extract-medication: `{ transcript }` → MedicationRequest. */
+export async function extractionResult(body: unknown, extract: Extract): Promise<ApiResult> {
+  const transcript = (body as { transcript?: unknown } | null)?.transcript;
+  if (
+    typeof transcript !== "string" ||
+    transcript.trim().length === 0 ||
+    transcript.length > MAX_TRANSCRIPT_LENGTH
+  ) {
+    return {
+      status: 400,
+      body: {
+        error: `transcript must be a non-empty string of at most ${MAX_TRANSCRIPT_LENGTH} characters.`,
+      },
+    };
+  }
+
+  try {
+    return { status: 200, body: await extract(transcript.trim()) };
+  } catch (error) {
+    console.error(
+      "[medication-extraction] Extraction failed:",
+      error instanceof Error ? error.message : error,
+    );
+    return { status: 502, body: { error: "Could not extract the medication request." } };
+  }
+}
+
+export function createMedicationExtractionHandler(extract: Extract): RequestHandler {
+  return async (req, res) => {
+    sendResult(res, await extractionResult(req.body, extract));
   };
 }
