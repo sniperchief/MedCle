@@ -67,21 +67,20 @@ export const ArrowRightIcon = () => (
   </Icon>
 );
 
+export const MenuIcon = () => (
+  <Icon size={22}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Icon>
+);
+
+export const CloseIcon = () => (
+  <Icon size={22}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+);
+
 export const MinusIcon = () => (
   <Icon>
     <path d="M6 12h12" />
   </Icon>
-);
-
-/** The MEDCLE mark: two matching sound waves, one per speaker. */
-export const LogoMark = () => (
-  <svg className="logo__mark" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-    <rect width="28" height="28" rx="8" fill="#0b835c" />
-    <path
-      d="M7 11v6M10.5 8.5v11M14 12v4M17.5 8.5v11M21 11v6"
-      stroke="#fff"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  </svg>
 );

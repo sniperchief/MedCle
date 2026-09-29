@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { PharmacistReadBack } from "./components/PharmacistReadBack";
 import { ReadBackOffer } from "./components/ReadBackOffer";
+import { SiteFooter } from "./components/SiteFooter";
 import { SpeakerPanel } from "./components/SpeakerPanel";
 import { TopBar } from "./components/TopBar";
 import { useSpeaker } from "./components/useSpeaker";
@@ -17,11 +18,13 @@ export function App() {
 
   return (
     <>
-      <TopBar>
-        <Link to="/" className="topbar__link">
-          About MEDCLE
-        </Link>
-      </TopBar>
+      <TopBar
+        actions={
+          <Link to="/" className="topbar__link">
+            About MEDCLE
+          </Link>
+        }
+      />
 
       <main className="page">
         <header className="session">
@@ -51,12 +54,9 @@ export function App() {
             <ReadBackOffer onAdd={() => setReadBackEnabled(true)} />
           )}
         </div>
-
-        <footer className="footer">
-          MEDCLE only repeats and compares what was said. It gives no medical advice; the
-          pharmacist verifies every request.
-        </footer>
       </main>
+
+      <SiteFooter />
     </>
   );
 }

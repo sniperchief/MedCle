@@ -182,14 +182,15 @@ ol {
   border-bottom: 1px solid var(--color-hairline);
 }
 
+/* Logo left, menu centred, actions right. */
 .topbar__inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 16px var(--gutter);
+  padding: 14px var(--gutter);
 }
 
 a {
@@ -199,14 +200,81 @@ a {
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-self: start;
+}
+
+.logo__image {
+  display: block;
+  width: auto;
+}
+
+.topbar__nav {
+  grid-column: 2;
+  display: flex;
+  gap: 32px;
+}
+
+.topbar__nav a,
+.topbar__menu a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-graphite);
   text-decoration: none;
 }
 
-.logo__word {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
+.topbar__nav a:hover {
+  color: var(--color-ink-black);
+}
+
+.topbar__actions {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar .button {
+  text-decoration: none;
+}
+
+.topbar__menu-button {
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-ink-black);
+  cursor: pointer;
+}
+
+/* The dropdown menu used on small screens. */
+.topbar__menu {
+  display: none;
+  flex-direction: column;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 4px var(--gutter) 20px;
+  animation: rise 0.2s ease-out;
+}
+
+.topbar__menu a {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-hairline);
+  font-size: 16px;
+  color: var(--color-ink-black);
+}
+
+.topbar__menu-actions {
+  display: flex;
+  padding-top: 16px;
+}
+
+.topbar__menu-actions .button {
+  flex: 1;
 }
 
 .topbar__link {
@@ -794,14 +862,70 @@ a {
   outline-color: var(--color-pure-white);
 }
 
-/* ── Footer ───────────────────────────────────────────────────────── */
+/* ── Site footer ──────────────────────────────────────────────────── */
 
-.footer {
-  max-width: 620px;
-  margin-top: 48px;
+.site-footer {
+  border-top: 1px solid var(--color-hairline);
+  background: var(--color-pure-white);
+}
+
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1.3fr);
+  gap: 40px;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 48px var(--gutter) 32px;
+}
+
+.site-footer__brand {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.site-footer__brand p,
+.site-footer__note p:not(.label) {
+  max-width: 360px;
+  font-size: 14px;
+  color: var(--color-graphite);
+}
+
+.site-footer__links,
+.site-footer__note {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.site-footer__links a {
+  width: fit-content;
+  font-size: 14px;
+  color: var(--color-graphite);
+  text-decoration: none;
+}
+
+.site-footer__links a:hover {
+  color: var(--color-ink-black);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 20px var(--gutter) 32px;
+  border-top: 1px solid var(--color-hairline);
   font-size: 13px;
   color: var(--color-slate-mid);
-  letter-spacing: -0.1px;
+}
+
+.site-footer__bottom p:last-child {
+  max-width: 560px;
 }
 
 /* ── Motion ───────────────────────────────────────────────────────── */
@@ -849,11 +973,63 @@ a {
   .panels {
     grid-template-columns: 1fr;
   }
+
+  /* The centred menu collapses into the Menu button and dropdown. */
+  .topbar__inner {
+    grid-template-columns: auto 1fr;
+  }
+
+  .topbar__nav {
+    display: none;
+  }
+
+  .topbar__actions {
+    grid-column: 2;
+  }
+
+  .topbar__menu-button {
+    display: grid;
+  }
+
+  .topbar__menu {
+    display: flex;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-footer__brand {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 560px) {
   :root {
     --gutter: 16px;
+  }
+
+  /* On phones the Launch button moves into the Menu dropdown. */
+  .topbar__actions > .button {
+    display: none;
+  }
+
+  .logo__image {
+    height: 28px;
+  }
+
+  .session {
+    padding: 28px 0 24px;
+  }
+
+  .panel__header {
+    flex-wrap: wrap;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 40px;
   }
 
   .panel,

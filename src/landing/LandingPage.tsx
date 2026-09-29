@@ -1,4 +1,5 @@
-import { TopBar } from "../components/TopBar";
+import { SiteFooter } from "../components/SiteFooter";
+import { TopBar, type NavLink } from "../components/TopBar";
 import { ClaritySection } from "./ClaritySection";
 import { LaunchButton } from "./LaunchButton";
 import { ListenSection } from "./ListenSection";
@@ -7,18 +8,17 @@ import { SafetySection } from "./SafetySection";
 import { Reveal } from "./Reveal";
 import "./landing.css";
 
+const SECTION_LINKS: NavLink[] = [
+  { href: "#problem", label: "The problem" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#safety", label: "What it doesn't do" },
+];
+
 /** The marketing and education page at "/". The working tool lives at /app. */
 export function LandingPage() {
   return (
     <>
-      <TopBar>
-        <nav className="topbar__nav" aria-label="Sections">
-          <a href="#problem">The problem</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#safety">What it doesn't do</a>
-        </nav>
-        <LaunchButton />
-      </TopBar>
+      <TopBar links={SECTION_LINKS} actions={<LaunchButton />} />
 
       <main className="landing">
         <ProblemSection />
@@ -39,13 +39,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing-footer">
-        <span className="logo__word">medcle</span>
-        <p>
-          MEDCLE is a communication aid for pharmacy counters. It does not prescribe, diagnose or
-          recommend medication.
-        </p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
