@@ -67,6 +67,12 @@ export const ArrowRightIcon = () => (
   </Icon>
 );
 
+export const ArrowLeftIcon = () => (
+  <Icon>
+    <path d="M19 12H5M11 6l-6 6 6 6" />
+  </Icon>
+);
+
 export const MenuIcon = () => (
   <Icon size={22}>
     <path d="M4 7h16M4 12h16M4 17h16" />

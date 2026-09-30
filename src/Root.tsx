@@ -1,14 +1,24 @@
 import { useEffect } from "react";
 import { App } from "./App";
 import { LandingPage } from "./landing/LandingPage";
-import { APP_PATH, usePathname } from "./router";
+import { PharmacyPage } from "./pharmacy/PharmacyPage";
+import { APP_PATH, PHARMACY_PATH, usePathname } from "./router";
+
+const TITLES = {
+  app: "Counter session · MEDCLE",
+  pharmacy: "Pharmacy requests · MEDCLE",
+  landing: "MEDCLE · Clearer medication requests",
+};
 
 export function Root() {
-  const isApp = usePathname() === APP_PATH;
+  const pathname = usePathname();
+  const page = pathname === APP_PATH ? "app" : pathname === PHARMACY_PATH ? "pharmacy" : "landing";
 
   useEffect(() => {
-    document.title = isApp ? "Counter session · MEDCLE" : "MEDCLE · Clearer medication requests";
-  }, [isApp]);
+    document.title = TITLES[page];
+  }, [page]);
 
-  return isApp ? <App /> : <LandingPage />;
+  if (page === "app") return <App />;
+  if (page === "pharmacy") return <PharmacyPage />;
+  return <LandingPage />;
 }

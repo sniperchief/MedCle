@@ -1,7 +1,7 @@
+import type { ReactNode } from "react";
 import type { TranscriptionStatus } from "../transcription/transcription-session";
 import { AlertIcon, MicIcon, StopIcon } from "./icons";
 import { MedicationRequestView } from "./MedicationRequestView";
-import { ReadbackCard } from "./ReadbackCard";
 import { StatusIndicator } from "./StatusIndicator";
 import type { Speaker } from "./useSpeaker";
 
@@ -10,8 +10,11 @@ interface SpeakerPanelProps {
   /** Small-caps line above the title describing this speaker's part. */
   eyebrow: string;
   speaker: Speaker;
-  /** Read the extracted request back aloud for confirmation (the customer's side). */
-  readback?: boolean;
+  /**
+   * Shown in place of the extracted request once there is one: the
+   * customer's readback and confirmation.
+   */
+  confirmation?: ReactNode;
   /** Shows a Hide button for an optional panel. */
   onHide?(): void;
 }
@@ -27,7 +30,7 @@ export function SpeakerPanel({
   title,
   eyebrow,
   speaker,
-  readback = false,
+  confirmation,
   onHide,
 }: SpeakerPanelProps) {
   const { status, liveTranscript, finalTranscript, errorMessage, start, stop } =
@@ -95,14 +98,12 @@ export function SpeakerPanel({
         </p>
       </div>
 
-      <MedicationRequestView
-        title={title}
-        extraction={speaker.extraction}
-        onRetry={speaker.retryExtraction}
-      />
-
-      {readback && speaker.extraction.status === "success" && (
-        <ReadbackCard request={speaker.extraction.request} onSayAgain={start} />
+      {confirmation ?? (
+        <MedicationRequestView
+          title={title}
+          extraction={speaker.extraction}
+          onRetry={speaker.retryExtraction}
+        />
       )}
     </section>
   );

@@ -1,9 +1,11 @@
-// A minimal client-side router for MEDCLE's two pages: "/" and "/app".
+// A minimal client-side router for MEDCLE's pages: "/", "/app" and "/pharmacy".
 
 import { useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent } from "react";
 
 /** Where the counter tool lives; every other path shows the landing page. */
 export const APP_PATH = "/app";
+/** The pharmacist's queue of confirmed requests. */
+export const PHARMACY_PATH = "/pharmacy";
 
 function subscribe(onChange: () => void): () => void {
   window.addEventListener("popstate", onChange);

@@ -28,6 +28,15 @@ describe("routes", () => {
     expect(document.title).toBe("Counter session · MEDCLE");
   });
 
+  test("/pharmacy shows the pharmacy requests, linked from the counter tool", () => {
+    window.history.replaceState(null, "", "/app");
+    render(<Root />);
+    fireEvent.click(screen.getByRole("link", { name: "Pharmacy requests" }));
+    expect(window.location.pathname).toBe("/pharmacy");
+    expect(screen.getByRole("heading", { level: 1, name: "Pharmacy requests" })).toBeTruthy();
+    expect(document.title).toBe("Pharmacy requests · MEDCLE");
+  });
+
   test("Launch MEDCLE opens /app, and Back returns to the landing page", () => {
     render(<Root />);
     const launch = screen.getAllByRole("link", { name: "Launch MEDCLE" });

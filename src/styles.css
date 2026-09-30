@@ -290,6 +290,10 @@ a {
   text-underline-offset: 4px;
 }
 
+.topbar__link + .topbar__link {
+  margin-left: 12px;
+}
+
 .brand-word {
   color: var(--color-forest-grove);
 }
@@ -621,6 +625,311 @@ a {
 
 .readback__actions .button {
   padding: 10px 18px;
+}
+
+.readback__prompt {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-graphite);
+}
+
+.readback__reply {
+  display: grid;
+  gap: 2px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.readback__status--listening {
+  color: var(--color-forest-grove);
+  font-weight: 500;
+}
+
+.readback__status--paused {
+  align-items: flex-start;
+  padding: 12px 16px;
+  border: 1px solid var(--color-ink-black);
+  border-radius: var(--radius-icons);
+  color: var(--color-ink-black);
+}
+
+.readback__status--paused .icon {
+  color: var(--color-ink-black);
+}
+
+/* A pulsing dot while MEDCLE listens for the customer's answer. */
+.readback__listening {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-forest-grove);
+  animation: pulse 1.4s ease-out infinite;
+}
+
+.readback--listening {
+  box-shadow: 0 0 0 4px rgba(11, 131, 92, 0.12);
+}
+
+.extraction__corrected {
+  color: var(--color-forest-grove);
+}
+
+/* The customer's confirmed request */
+.request-confirmed {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  background: var(--color-pure-white);
+  border: 1px solid var(--color-forest-grove);
+  border-radius: var(--radius-cards);
+  animation: rise 0.3s ease-out;
+}
+
+.request-confirmed__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+.request-confirmed__title .icon {
+  color: var(--color-forest-grove);
+}
+
+.request-confirmed__text {
+  color: var(--color-graphite);
+}
+
+.request-confirmed__summary {
+  padding: 14px 16px;
+  background: var(--color-mist-gray);
+  border-radius: var(--radius-icons);
+}
+
+.request-confirmed__medication,
+.request-card__medication,
+.request-detail__title {
+  overflow-wrap: anywhere;
+}
+
+.request-confirmed__medication::first-letter,
+.request-card__medication::first-letter,
+.request-detail__title::first-letter {
+  text-transform: uppercase;
+}
+
+.request-confirmed__medication {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+
+.request-confirmed__details {
+  color: var(--color-graphite);
+}
+
+.request-confirmed a.button {
+  text-decoration: none;
+}
+
+.request-confirmed__status {
+  font-size: 14px;
+  color: var(--color-graphite);
+}
+
+/* ── Pharmacy requests ────────────────────────────────────────────── */
+
+.queue {
+  display: grid;
+  gap: 32px;
+}
+
+.queue__group {
+  display: grid;
+  gap: 12px;
+}
+
+.queue__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-forest-grove);
+}
+
+.queue__count {
+  padding: 2px 10px;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-slate-mid);
+  letter-spacing: 0;
+}
+
+.queue__empty {
+  padding: 24px;
+  background: var(--color-mist-gray);
+  border-radius: var(--radius-cards);
+  color: var(--color-slate-mid);
+}
+
+.queue__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.request-card {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  padding: 18px 20px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: var(--color-pure-white);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-cards);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.request-card:hover {
+  border-color: var(--color-ink-black);
+}
+
+.request-card--new {
+  border-color: var(--color-forest-grove);
+  box-shadow: 0 0 0 3px rgba(11, 131, 92, 0.1);
+}
+
+.request-card--completed {
+  background: var(--color-mist-gray);
+  border-color: transparent;
+}
+
+.request-card__medication {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.4px;
+}
+
+.request-card__details {
+  color: var(--color-graphite);
+}
+
+.request-card__details--missing {
+  color: var(--color-slate-mid);
+}
+
+.request-card__meta {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-slate-mid);
+}
+
+.request-detail {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.request-detail__card {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  padding: 24px;
+  background: var(--color-mist-gray);
+  border-radius: var(--radius-cards);
+}
+
+.request-detail__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.request-detail__title {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.request-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px 20px;
+}
+
+.request-detail__facts dd {
+  margin-top: 2px;
+}
+
+.request-detail__quote {
+  margin: 0;
+}
+
+.request-detail__corrections {
+  display: grid;
+  gap: 8px;
+}
+
+.request-status {
+  padding: 6px 14px;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-pure-white);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.request-status--new {
+  color: var(--color-forest-grove);
+  border-color: var(--color-forest-grove);
+}
+
+.status-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  justify-self: start;
+  background: var(--color-pure-white);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-halo);
+}
+
+.status-switch__option {
+  padding: 8px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-graphite);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.status-switch__option:hover {
+  color: var(--color-ink-black);
+}
+
+.status-switch__option[aria-pressed="true"] {
+  color: var(--color-pure-white);
+  background: var(--color-ink-black);
 }
 
 /* ── Comparison ───────────────────────────────────────────────────── */
@@ -1034,7 +1343,8 @@ a {
 
   .panel,
   .comparison,
-  .mismatch {
+  .mismatch,
+  .request-detail__card {
     padding: 20px;
   }
 
