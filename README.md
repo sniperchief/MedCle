@@ -170,14 +170,18 @@ Browsers only allow microphone access on `localhost` or over HTTPS.
 
 ## Testing
 
-`npm test` runs the whole suite offline, with no API keys needed:
+The full flow has been tested end to end with real speech: speaking a request, the readback,
+confirming by voice, correcting a detail, and reviewing the request in the pharmacy queue, all
+through AssemblyAI and Claude.
+
+On top of that, `npm test` runs the whole suite offline, with no API keys needed:
 
 - **Server and logic:** extraction output validation, request validation, the Vercel functions,
   the deterministic comparison, the spoken warning and readback text, and the medication key-term
   limits.
 - **Voice confirmation:** the reply classifier (yes, no, correction, hedged, empty), applying a
-  correction to only the restated fields, and the confirmation flow end to end with fake speech and
-  listening: listening only after speaking, auto-confirming a yes, the correction loop, asking
+  correction to only the restated fields, and every step of the confirmation flow with
+  simulated replies: listening only after speaking, auto-confirming a yes, the correction loop, asking
   again, pausing after missed answers, and stale answers after a new recording.
 - **Pharmacy requests:** exactly one request per confirmation, none without one, the stored
   transcript and corrections, status changes, the queue, the request detail, and updates from
@@ -241,5 +245,3 @@ where they operate, and tell customers that the conversation is transcribed.
 - One medication per request: if several are mentioned, the first is extracted.
 - Voice output depends on the voices installed on each device.
 - The pharmacy queue lives in one browser: a pharmacist on another computer doesn't see it yet.
-- Listening for the answer opens a new transcription session after MEDCLE speaks, which takes a
-  moment. A very quick "yes" can be missed; MEDCLE then asks again.
